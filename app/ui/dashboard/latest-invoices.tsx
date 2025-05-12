@@ -1,63 +1,53 @@
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
+// app/ui/dashboard/latest-invoices.tsx
+import { fetchLatestInvoices } from '@/app/lib/data';
+import { formatCurrency } from '@/app/lib/utils';
 import Image from 'next/image';
 import { lusitana } from '@/app/ui/fonts';
-import { LatestInvoice } from '@/app/lib/definitions';
-export default async function LatestInvoices({
-  latestInvoices,
-}: {
-  latestInvoices: LatestInvoice[];
-}) {
-  return (
-    <div className="flex w-full flex-col md:col-span-4">
-      <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
-        Latest Invoices
-      </h2>
-      <div className="flex grow flex-col justify-between rounded-xl bg-gray-50 p-4">
-        {/* NOTE: Uncomment this code in Chapter 7 */}
 
-        {/* <div className="bg-white px-6">
-          {latestInvoices.map((invoice, i) => {
-            return (
-              <div
-                key={invoice.id}
-                className={clsx(
-                  'flex flex-row items-center justify-between py-4',
-                  {
-                    'border-t': i !== 0,
-                  },
-                )}
-              >
-                <div className="flex items-center">
-                  <Image
-                    src={invoice.image_url}
-                    alt={`${invoice.name}'s profile picture`}
-                    className="mr-4 rounded-full"
-                    width={32}
-                    height={32}
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold md:text-base">
-                      {invoice.name}
-                    </p>
-                    <p className="hidden text-sm text-gray-500 sm:block">
-                      {invoice.email}
-                    </p>
-                  </div>
-                </div>
-                <p
-                  className={`${lusitana.className} truncate text-sm font-medium md:text-base`}
-                >
-                  {invoice.amount}
-                </p>
-              </div>
-            );
-          })}
-        </div> */}
-        <div className="flex items-center pb-2 pt-6">
-          <ArrowPathIcon className="h-5 w-5 text-gray-500" />
-          <h3 className="ml-2 text-sm text-gray-500 ">Updated just now</h3>
-        </div>
+export default async function LatestInvoices() {
+  const invoices = await fetchLatestInvoices();
+
+  return (
+    <div className="bg-white shadow-lg rounded-lg p-6 col-span-4">
+      <h2 className={`${lusitana.className} text-xl mb-4`}>Latest Invoices</h2>
+      <div className="space-y-4">
+        {invoices.map((invoice) => (
+          <div key={invoice.email} className="flex items-center gap-4">
+            <Image
+              src={invoice.image_url}
+              alt={invoice.name}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+            <div>
+              <p className="font-medium">{invoice.name}</p>
+              <p className="text-sm text-gray-600">{invoice.email}</p>
+              <p className="text-sm text-gray-500">
+                {formatCurrency(invoice.amount)} • {new Date(invoice.date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function LatestInvoicesSkeleton() {
+  return (
+    <div className="bg-white shadow-lg rounded-lg p-6 col-span-4 h-[400px] animate-pulse">
+      <div className="h-6 w-1/3 bg-gray-200 rounded mb-4"></div>
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

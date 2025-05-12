@@ -1,65 +1,66 @@
-import { generateYAxis } from '@/app/lib/utils';
-import { CalendarIcon } from '@heroicons/react/24/outline';
-import { lusitana } from '@/app/ui/fonts';
+// app/ui/dashboard/revenue-chart.tsx
+'use client';
+
+import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+import { useEffect, useState } from 'react';
 import { Revenue } from '@/app/lib/definitions';
 
-// This component is representational only.
-// For data visualization UI, check out:
-// https://www.tremor.so/
-// https://www.chartjs.org/
-// https://airbnb.io/visx/
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
-export default async function RevenueChart({
-  revenue,
-}: {
-  revenue: Revenue[];
-}) {
-  const chartHeight = 350;
-  // NOTE: Uncomment this code in Chapter 7
+export default function RevenueChart() {
+  const [revenue, setRevenue] = useState<Revenue[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // const { yAxisLabels, topLabel } = generateYAxis(revenue);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Fetch through API route to avoid direct DB access from client
+        const response = await fetch('/api/revenue');
+        const data = await response.json();
+        setRevenue(data);
+      } catch (error) {
+        console.error('Failed to fetch revenue:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  // if (!revenue || revenue.length === 0) {
-  //   return <p className="mt-4 text-gray-400">No data available.</p>;
-  // }
+  if (loading) {
+    return <div className="h-[350px] bg-gray-100 rounded-lg animate-pulse" />;
+  }
+
+  if (!revenue.length) {
+    return <div className="h-[350px] flex items-center justify-center">No revenue data available</div>;
+  }
+
+  const chartData = {
+    labels: revenue.map((r: Revenue) => r.month),
+    datasets: [{
+      label: 'Revenue',
+      data: revenue.map((r: Revenue) => r.revenue),
+      borderColor: 'rgb(75, 192, 192)',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      tension: 0.3
+    }]
+  };
 
   return (
-    <div className="w-full md:col-span-4">
-      <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
-        Recent Revenue
-      </h2>
-      {/* NOTE: Uncomment this code in Chapter 7 */}
-
-      {/* <div className="rounded-xl bg-gray-50 p-4">
-        <div className="sm:grid-cols-13 mt-0 grid grid-cols-12 items-end gap-2 rounded-md bg-white p-4 md:gap-4">
-          <div
-            className="mb-6 hidden flex-col justify-between text-sm text-gray-400 sm:flex"
-            style={{ height: `${chartHeight}px` }}
-          >
-            {yAxisLabels.map((label) => (
-              <p key={label}>{label}</p>
-            ))}
-          </div>
-
-          {revenue.map((month) => (
-            <div key={month.month} className="flex flex-col items-center gap-2">
-              <div
-                className="w-full rounded-md bg-blue-300"
-                style={{
-                  height: `${(chartHeight / topLabel) * month.revenue}px`,
-                }}
-              ></div>
-              <p className="-rotate-90 text-sm text-gray-400 sm:rotate-0">
-                {month.month}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center pb-2 pt-6">
-          <CalendarIcon className="h-5 w-5 text-gray-500" />
-          <h3 className="ml-2 text-sm text-gray-500 ">Last 12 months</h3>
-        </div>
-      </div> */}
+    <div className="bg-white p-6 rounded-lg shadow h-[350px]">
+      <Line 
+        data={chartData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Revenue Over Time' }
+          }
+        }}
+      />
     </div>
   );
 }
